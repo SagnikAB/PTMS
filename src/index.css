@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#FAF8F5] text-[#2C2725] font-sans antialiased min-h-screen selection:bg-sienna-100 selection:text-sienna-900;
+  }
+
+  h1, h2, h3, .font-heading {
+    @apply font-serif tracking-tight text-[#231E1C];
+  }
+}
+
+/* Custom scrollbars and transitions */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5EFE8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C8D2D6;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #78898F;
+}
+
+/* Leaflet Map Styles Customization */
+.leaflet-container {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  z-index: 10;
+}
+
+.leaflet-popup-content-wrapper {
+  background-color: #FAF8F5 !important;
+  color: #2C2725 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(44, 39, 37, 0.15) !important;
+  border: 1px solid #E4D6C5 !important;
+}
+
+.leaflet-popup-tip {
+  background-color: #FAF8F5 !important;
+}

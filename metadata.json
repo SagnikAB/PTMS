@@ -1,0 +1,6 @@
+{
+  "name": "Bharat Transit Live - Pan-India Public Transport Tracking System",
+  "description": "Live GPS tracking, PNR lookup, station boards, and fleet management for Indian Railways, State Road Transport Corporations (KSRTC, MSRTC, UPSRTC, DTC, BMTC), and Metro networks across India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
