@@ -25,6 +25,8 @@ import {
 
 export default function PassengerSearch() {
   const [routes, setRoutes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [sourceQuery, setSourceQuery] = useState('');
   const [destinationQuery, setDestinationQuery] = useState('');
@@ -59,8 +61,11 @@ export default function PassengerSearch() {
 
       const res = await api.get('/search/routes', { params });
       setRoutes(Array.isArray(res.data) ? res.data : []);
+      setErrorMessage('');
     } catch (err) {
       console.error('Failed to load routes', err);
+      setRoutes([]);
+      setErrorMessage('Unable to load transit routes. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -169,6 +174,19 @@ export default function PassengerSearch() {
           ))}
         </div>
       </div>
+
+      {errorMessage && (
+        <div className="p-4 rounded-xl bg-sienna-50 border border-sienna-200 text-sienna-900 text-sm flex items-center justify-between gap-3">
+          <span>{errorMessage}</span>
+          <button
+            type="button"
+            onClick={fetchRoutes}
+            className="font-semibold underline underline-offset-2"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Route Search Form (REQ-10, REQ-11, REQ-12) */}
       <div className="bg-white rounded-xl border border-ivory-300 shadow-sm p-5 space-y-4">
