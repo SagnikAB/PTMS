@@ -25,7 +25,6 @@ import {
 
 export default function PassengerSearch() {
   const [routes, setRoutes] = useState([]);
-  setRoutes(Array.isArray(res.data) ? res.data : []);
   const [searchQuery, setSearchQuery] = useState('');
   const [sourceQuery, setSourceQuery] = useState('');
   const [destinationQuery, setDestinationQuery] = useState('');
@@ -59,7 +58,7 @@ export default function PassengerSearch() {
       if (agencyFilter !== 'all') params.agency = agencyFilter;
 
       const res = await api.get('/search/routes', { params });
-      setRoutes(res.data);
+      setRoutes(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error('Failed to load routes', err);
     } finally {
