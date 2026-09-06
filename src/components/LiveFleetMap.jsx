@@ -37,8 +37,8 @@ export default function LiveFleetMap() {
         api.get('/search/routes'),
         api.get('/trips/active')
       ]);
-      setRoutes(routesRes.data);
-      setActiveTrips(tripsRes.data);
+      setRoutes(Array.isArray(routesRes.data) ? routesRes.data : []);
+      setActiveTrips(Array.isArray(tripsRes.data) ? tripsRes.data : []);
       setLastRefreshed(new Date());
     } catch (err) {
       console.error('Failed to load fleet map data', err);

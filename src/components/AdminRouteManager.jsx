@@ -73,10 +73,10 @@ export default function AdminRouteManager() {
         api.get('/admin/drivers'),
         api.get('/admin/reports')
       ]);
-      setStops(stopsRes.data);
-      setRoutes(routesRes.data);
-      setVehicles(vehRes.data);
-      setDrivers(driverRes.data);
+      setStops(Array.isArray(stopsRes.data) ? stopsRes.data : []);
+      setRoutes(Array.isArray(routesRes.data) ? routesRes.data : []);
+      setVehicles(Array.isArray(vehRes.data) ? vehRes.data : []);
+      setDrivers(Array.isArray(driverRes.data) ? driverRes.data : []);
       setReportsData(reportsRes.data);
     } catch (err) {
       console.error('Failed to load admin data', err);

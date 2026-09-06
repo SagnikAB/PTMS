@@ -10,6 +10,16 @@ const JWT_SECRET = process.env.JWT_SECRET || 'ptms-super-secret-key-change-in-pr
 
 app.use(express.json());
 
+// Vercel may pass the function path without the /api prefix.
+if (process.env.VERCEL) {
+  app.use((req, res, next) => {
+    if (!req.url.startsWith('/api')) {
+      req.url = '/api' + req.url;
+    }
+    next();
+  });
+}
+
 // --- TYPES & INTERFACES ---
 export interface User {
   id: string;
@@ -1426,15 +1436,6 @@ app.get('/api/admin/reports', authenticateToken, requireRole('Admin'), (req, res
       maintenance: vehicles.filter(v => v.status === 'Maintenance').length
     }
   });
-});
-
-// Handle Vercel serverless function path normalizing:
-// In Vercel serverless, if the function receives a path without '/api', prefix it so existing '/api/...' handlers match
-app.use((req, res, next) => {
-  if (process.env.VERCEL && !req.url.startsWith('/api')) {
-    req.url = '/api' + req.url;
-  }
-  next();
 });
 
 // --- VITE MIDDLEWARE OR STATIC SERVING ---

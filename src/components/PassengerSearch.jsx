@@ -25,7 +25,7 @@ import {
 
 export default function PassengerSearch() {
   const [routes, setRoutes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  setRoutes(Array.isArray(res.data) ? res.data : []);
   const [searchQuery, setSearchQuery] = useState('');
   const [sourceQuery, setSourceQuery] = useState('');
   const [destinationQuery, setDestinationQuery] = useState('');
@@ -159,7 +159,9 @@ export default function PassengerSearch() {
               onClick={() => {
                 setSearchMode('all');
                 setSearchQuery(preset.q);
-                api.get('/search/routes', { params: { q: preset.q } }).then(res => setRoutes(res.data));
+                api.get('/search/routes', { params: { q: preset.q } }).then(res => {
+                  setRoutes(Array.isArray(res.data) ? res.data : []);
+                });
               }}
               className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white/80 hover:bg-white border border-ivory-300 text-stone-800 transition"
             >
