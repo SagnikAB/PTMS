@@ -2,7 +2,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { createServer as createViteServer } from 'vite';
 
 const app = express();
 const PORT = 3000;
@@ -10,15 +9,26 @@ const JWT_SECRET = process.env.JWT_SECRET || 'ptms-super-secret-key-change-in-pr
 
 app.use(express.json());
 
-// Vercel may pass the function path without the /api prefix.
-if (process.env.VERCEL) {
-  app.use((req, res, next) => {
-    if (!req.url.startsWith('/api')) {
-      req.url = '/api' + req.url;
-    }
-    next();
-  });
-}
+// Universal CORS headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+// Normalizes request URLs for both serverless (Vercel) and standalone environments
+app.use((req, res, next) => {
+  if (req.originalUrl && req.originalUrl.startsWith('/api') && !req.url.startsWith('/api')) {
+    req.url = req.originalUrl;
+  } else if (!req.url.startsWith('/api') && req.url !== '/' && !req.url.startsWith('/assets')) {
+    req.url = '/api' + req.url;
+  }
+  next();
+});
 
 // --- TYPES & INTERFACES ---
 export interface User {
@@ -458,131 +468,137 @@ app.get('/api/auth/me', authenticateToken, (req: AuthenticatedRequest, res) => {
 
 // --- ROUTE SEARCH & PUBLIC PASSENGER APIs (SRS 4.2 & 4.3, REQ-10 to REQ-24) ---
 app.get('/api/search/routes', (req, res) => {
-  const { source, destination, route_no, stop, q, agency, mode, zone } = req.query;
+  try {
+    const { source, destination, route_no, stop, q, agency, mode, zone } = req.query;
 
-  let filtered = [...routes];
+    let filtered = [...routes];
 
-  // Search by Agency (Indian Railways, KSRTC, MSRTC, DTC, etc.)
-  if (agency) {
-    const agTerm = String(agency).trim().toLowerCase();
-    filtered = filtered.filter(r => r.agency && r.agency.toLowerCase().includes(agTerm));
-  }
+    // Search by Agency (Indian Railways, KSRTC, MSRTC, DTC, etc.)
+    if (agency && agency !== 'all') {
+      const agTerm = String(agency).trim().toLowerCase();
+      filtered = filtered.filter(r => r.agency && r.agency.toLowerCase().includes(agTerm));
+    }
 
-  // Filter by Transit Mode (train, bus, metro)
-  if (mode) {
-    const modeTerm = String(mode).trim().toLowerCase();
-    filtered = filtered.filter(r => r.mode && r.mode.toLowerCase() === modeTerm);
-  }
+    // Filter by Transit Mode (train, bus, metro)
+    if (mode && mode !== 'all') {
+      const modeTerm = String(mode).trim().toLowerCase();
+      filtered = filtered.filter(r => r.mode && r.mode.toLowerCase() === modeTerm);
+    }
 
-  // Filter by Geographic Zone (North, South, West, East, Central, Pan-India)
-  if (zone && zone !== 'All') {
-    const zoneTerm = String(zone).trim().toLowerCase();
-    filtered = filtered.filter(r => r.zone && (r.zone.toLowerCase() === zoneTerm || r.zone === 'Pan-India'));
-  }
+    // Filter by Geographic Zone (North, South, West, East, Central, Pan-India)
+    if (zone && zone !== 'All' && zone !== 'all') {
+      const zoneTerm = String(zone).trim().toLowerCase();
+      filtered = filtered.filter(r => r.zone && (r.zone.toLowerCase() === zoneTerm || r.zone === 'Pan-India'));
+    }
 
-  // Search by Route Number, Name, Agency, or Keyword (REQ-10)
-  if (route_no || q) {
-    const term = String(route_no || q).trim().toLowerCase();
-    filtered = filtered.filter(
-      r =>
-        r.route_no.toLowerCase().includes(term) ||
-        r.route_name.toLowerCase().includes(term) ||
-        (r.agency && r.agency.toLowerCase().includes(term)) ||
-        r.source.toLowerCase().includes(term) ||
-        r.destination.toLowerCase().includes(term)
-    );
-  }
+    // Search by Route Number, Name, Agency, or Keyword (REQ-10)
+    if (route_no || q) {
+      const term = String(route_no || q).trim().toLowerCase();
+      filtered = filtered.filter(
+        r =>
+          (r.route_no && r.route_no.toLowerCase().includes(term)) ||
+          (r.route_name && r.route_name.toLowerCase().includes(term)) ||
+          (r.agency && r.agency.toLowerCase().includes(term)) ||
+          (r.source && r.source.toLowerCase().includes(term)) ||
+          (r.destination && r.destination.toLowerCase().includes(term))
+      );
+    }
 
-  // Search by Stop Name (REQ-12)
-  if (stop) {
-    const stopTerm = String(stop).trim().toLowerCase();
-    const matchingStopIds = stops
-      .filter(s => s.name.toLowerCase().includes(stopTerm) || (s.city && s.city.toLowerCase().includes(stopTerm)))
-      .map(s => s.id);
+    // Search by Stop Name (REQ-12)
+    if (stop) {
+      const stopTerm = String(stop).trim().toLowerCase();
+      const matchingStopIds = stops
+        .filter(s => (s.name && s.name.toLowerCase().includes(stopTerm)) || (s.city && s.city.toLowerCase().includes(stopTerm)))
+        .map(s => s.id);
 
-    filtered = filtered.filter(r => r.stop_ids.some(sid => matchingStopIds.includes(sid)));
-  }
+      filtered = filtered.filter(r => (r.stop_ids || []).some(sid => matchingStopIds.includes(sid)));
+    }
 
-  // Search by Source and Destination (REQ-11)
-  if (source && destination) {
-    const srcTerm = String(source).trim().toLowerCase();
-    const destTerm = String(destination).trim().toLowerCase();
+    // Search by Source and Destination (REQ-11)
+    if (source && destination) {
+      const srcTerm = String(source).trim().toLowerCase();
+      const destTerm = String(destination).trim().toLowerCase();
 
-    const srcStopIds = new Set(stops.filter(s => s.name.toLowerCase().includes(srcTerm) || (s.city && s.city.toLowerCase().includes(srcTerm))).map(s => s.id));
-    const destStopIds = new Set(stops.filter(s => s.name.toLowerCase().includes(destTerm) || (s.city && s.city.toLowerCase().includes(destTerm))).map(s => s.id));
+      const srcStopIds = new Set(stops.filter(s => (s.name && s.name.toLowerCase().includes(srcTerm)) || (s.city && s.city.toLowerCase().includes(srcTerm))).map(s => s.id));
+      const destStopIds = new Set(stops.filter(s => (s.name && s.name.toLowerCase().includes(destTerm)) || (s.city && s.city.toLowerCase().includes(destTerm))).map(s => s.id));
 
-    filtered = filtered.filter(route => {
-      let valid = false;
-      for (let i = 0; i < route.stop_ids.length; i++) {
-        if (srcStopIds.has(route.stop_ids[i])) {
-          for (let j = i + 1; j < route.stop_ids.length; j++) {
-            if (destStopIds.has(route.stop_ids[j])) {
-              valid = true;
-              break;
+      filtered = filtered.filter(route => {
+        const rStops = route.stop_ids || [];
+        let valid = false;
+        for (let i = 0; i < rStops.length; i++) {
+          if (srcStopIds.has(rStops[i])) {
+            for (let j = i + 1; j < rStops.length; j++) {
+              if (destStopIds.has(rStops[j])) {
+                valid = true;
+                break;
+              }
             }
           }
+          if (valid) break;
         }
-        if (valid) break;
-      }
-      return valid;
+        return valid;
+      });
+    } else if (source) {
+      const srcTerm = String(source).trim().toLowerCase();
+      const srcStopIds = new Set(stops.filter(s => (s.name && s.name.toLowerCase().includes(srcTerm)) || (s.city && s.city.toLowerCase().includes(srcTerm))).map(s => s.id));
+      filtered = filtered.filter(r => (r.stop_ids || []).some(sid => srcStopIds.has(sid)));
+    } else if (destination) {
+      const destTerm = String(destination).trim().toLowerCase();
+      const destStopIds = new Set(stops.filter(s => (s.name && s.name.toLowerCase().includes(destTerm)) || (s.city && s.city.toLowerCase().includes(destTerm))).map(s => s.id));
+      filtered = filtered.filter(r => (r.stop_ids || []).some(sid => destStopIds.has(sid)));
+    }
+
+    // Map each route with resolved stops and live vehicle status (REQ-13, REQ-14)
+    const results = filtered.map(route => {
+      const routeStops = (route.stop_ids || [])
+        .map((sid, idx) => {
+          const s = stops.find(st => st.id === sid);
+          return s ? { ...s, sequence: idx + 1 } : null;
+        })
+        .filter(Boolean);
+
+      // Active trips on this route
+      const activeTrip = trips.find(t => t.route_id === route.id && t.status === 'Active');
+      const vehicle = activeTrip ? vehicles.find(v => v.id === activeTrip.vehicle_id) : null;
+      const driver = activeTrip ? users.find(u => u.id === activeTrip.driver_id) : null;
+
+      let liveStatus = {
+        is_active: !!activeTrip,
+        trip_id: activeTrip ? activeTrip.id : null,
+        vehicle: vehicle ? { reg_no: vehicle.reg_no, model: vehicle.model, capacity: vehicle.capacity, vehicle_class: vehicle.vehicle_class, agency: vehicle.agency } : null,
+        driver: driver ? { name: driver.name, phone: driver.phone } : null,
+        current_location: activeTrip ? activeTrip.current_location : null,
+        delay_minutes: activeTrip ? activeTrip.delay_minutes : 0,
+        delay_reason: activeTrip ? activeTrip.delay_reason : 'On Schedule',
+        occupancy_percent: activeTrip ? activeTrip.occupancy_percent : 80,
+        platform: activeTrip ? activeTrip.platform : 'Platform 1',
+        path_progress_percent: activeTrip ? activeTrip.path_progress_percent : 0,
+        next_stop: activeTrip && activeTrip.next_stop_id ? (stops.find(s => s.id === activeTrip.next_stop_id)?.name || null) : null
+      };
+
+      return {
+        id: route.id,
+        route_no: route.route_no,
+        route_name: route.route_name,
+        agency: route.agency,
+        mode: route.mode,
+        zone: route.zone,
+        fare_inr: route.fare_inr,
+        typical_duration: route.typical_duration,
+        frequency_mins: route.frequency_mins,
+        source: route.source,
+        destination: route.destination,
+        distance_km: route.distance_km,
+        stops: routeStops,
+        live_status: liveStatus
+      };
     });
-  } else if (source) {
-    const srcTerm = String(source).trim().toLowerCase();
-    const srcStopIds = new Set(stops.filter(s => s.name.toLowerCase().includes(srcTerm) || (s.city && s.city.toLowerCase().includes(srcTerm))).map(s => s.id));
-    filtered = filtered.filter(r => r.stop_ids.some(sid => srcStopIds.has(sid)));
-  } else if (destination) {
-    const destTerm = String(destination).trim().toLowerCase();
-    const destStopIds = new Set(stops.filter(s => s.name.toLowerCase().includes(destTerm) || (s.city && s.city.toLowerCase().includes(destTerm))).map(s => s.id));
-    filtered = filtered.filter(r => r.stop_ids.some(sid => destStopIds.has(sid)));
+
+    return res.json(results);
+  } catch (error) {
+    console.error('Error in /api/search/routes:', error);
+    return res.status(500).json({ error: 'Failed to search routes', detail: String(error) });
   }
-
-  // Map each route with resolved stops and live vehicle status (REQ-13, REQ-14)
-  const results = filtered.map(route => {
-    const routeStops = route.stop_ids
-      .map((sid, idx) => {
-        const s = stops.find(st => st.id === sid);
-        return s ? { ...s, sequence: idx + 1 } : null;
-      })
-      .filter(Boolean);
-
-    // Active trips on this route
-    const activeTrip = trips.find(t => t.route_id === route.id && t.status === 'Active');
-    const vehicle = activeTrip ? vehicles.find(v => v.id === activeTrip.vehicle_id) : null;
-    const driver = activeTrip ? users.find(u => u.id === activeTrip.driver_id) : null;
-
-    let liveStatus = {
-      is_active: !!activeTrip,
-      trip_id: activeTrip ? activeTrip.id : null,
-      vehicle: vehicle ? { reg_no: vehicle.reg_no, model: vehicle.model, capacity: vehicle.capacity, vehicle_class: vehicle.vehicle_class, agency: vehicle.agency } : null,
-      driver: driver ? { name: driver.name, phone: driver.phone } : null,
-      current_location: activeTrip ? activeTrip.current_location : null,
-      delay_minutes: activeTrip ? activeTrip.delay_minutes : 0,
-      delay_reason: activeTrip ? activeTrip.delay_reason : 'On Schedule',
-      occupancy_percent: activeTrip ? activeTrip.occupancy_percent : 80,
-      platform: activeTrip ? activeTrip.platform : 'Platform 1',
-      path_progress_percent: activeTrip ? activeTrip.path_progress_percent : 0,
-      next_stop: activeTrip && activeTrip.next_stop_id ? stops.find(s => s.id === activeTrip.next_stop_id)?.name : null
-    };
-
-    return {
-      id: route.id,
-      route_no: route.route_no,
-      route_name: route.route_name,
-      agency: route.agency,
-      mode: route.mode,
-      zone: route.zone,
-      fare_inr: route.fare_inr,
-      typical_duration: route.typical_duration,
-      frequency_mins: route.frequency_mins,
-      source: route.source,
-      destination: route.destination,
-      distance_km: route.distance_km,
-      stops: routeStops,
-      live_status: liveStatus
-    };
-  });
-
-  res.json(results);
 });
 
 // Detailed live route tracking with ETAs for every stop (REQ-16 to REQ-24)
@@ -1441,6 +1457,7 @@ app.get('/api/admin/reports', authenticateToken, requireRole('Admin'), (req, res
 // --- VITE MIDDLEWARE OR STATIC SERVING ---
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa'
@@ -1458,6 +1475,15 @@ async function startServer() {
     console.log(`PTMS Server operating at http://0.0.0.0:${PORT}`);
   });
 }
+
+// Global error handler
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('Unhandled API error:', err);
+  res.status(err.status || 500).json({
+    error: 'Internal Server Error',
+    message: err?.message || 'An unexpected error occurred'
+  });
+});
 
 // Only start standalone HTTP server when not in a serverless environment (e.g. Vercel)
 if (!process.env.VERCEL && !process.env.NOW_REGION) {

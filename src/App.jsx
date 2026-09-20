@@ -35,15 +35,15 @@ function App() {
         </Routes>
       </main>
 
-      {/* Elegant Footer */}
-      <footer className="border-t border-ivory-300 bg-white/70 py-6 text-xs text-stone-500">
+      {/* Elegant Footer with Tokyo Palette */}
+      <footer className="border-t border-[#304352] bg-[#283845] py-8 text-xs text-slate-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-serif font-bold text-stone-800 text-sm">Bharat Transit Live</span>
-            <span>•</span>
-            <span>Pan-India Multi-Modal Public Transport Tracking System</span>
+            <span className="font-serif font-bold text-white text-sm">Bharat Transit Live</span>
+            <span className="text-[#FFA649]">•</span>
+            <span className="text-amber-100/70 font-serif italic">Pan-India Multi-Modal Public Transport Tracking System</span>
           </div>
-          <div className="text-stone-500 text-[11px]">
+          <div className="text-slate-400 text-[11px]">
             Indian Railways (IRCTC) • State Roadways (KSRTC, MSRTC, DTC, BMTC) • Rapid Metro • GPS Telemetry &lt; 350ms
           </div>
         </div>

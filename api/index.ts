@@ -1,10 +1,20 @@
 import app from '../server';
 
 export default function handler(req: any, res: any) {
-	const requestedPath = req.query?.path;
-	if (typeof requestedPath === 'string' && requestedPath.startsWith('/')) {
-		req.url = requestedPath.startsWith('/api') ? requestedPath : `/api${requestedPath}`;
-	}
+  try {
+    // In Vercel serverless functions, req.originalUrl contains the full client-requested path with query parameters
+    if (req.originalUrl && req.originalUrl.startsWith('/api')) {
+      req.url = req.originalUrl;
+    } else if (typeof req.query?.path === 'string') {
+      const p = req.query.path.startsWith('/') ? req.query.path : `/${req.query.path}`;
+      req.url = p.startsWith('/api') ? p : `/api${p}`;
+    } else if (!req.url.startsWith('/api')) {
+      req.url = `/api${req.url}`;
+    }
+  } catch (e) {
+    console.error('URL normalization error:', e);
+  }
 
-	return app(req, res);
+  return app(req, res);
 }
+

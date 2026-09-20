@@ -138,24 +138,27 @@ export default function PassengerSearch() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Hero / Header Section */}
-      <div className="bg-gradient-to-r from-ivory-100 via-[#FAF8F5] to-ivory-100 rounded-2xl p-6 md:p-8 border border-ivory-300 shadow-sm relative overflow-hidden">
+      {/* Hero / Header Section with Tokyo Palette Signature Contrast */}
+      <div className="bg-[#283845] text-white rounded-2xl p-6 md:p-8 border border-[#304352] shadow-lg relative overflow-hidden">
+        {/* Subtle decorative glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFA649]/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+
         <div className="max-w-3xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sienna-100 text-sienna-800 text-xs font-semibold mb-3 border border-sienna-200">
-            <Train className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFA649] text-[#283845] text-xs font-bold mb-3 shadow-sm">
+            <Train className="w-3.5 h-3.5 text-[#283845]" />
             <span>Pan-India Transit Network (SRS 4.2 - 4.4)</span>
           </div>
-          <h1 className="font-serif text-3xl md:text-4xl font-bold text-[#231E1C] tracking-tight">
+          <h1 className="font-serif text-3xl md:text-5xl font-bold text-white tracking-tight">
             Live Pan-India Transit & Route Tracker
           </h1>
-          <p className="text-stone-600 mt-2 text-base leading-relaxed">
+          <p className="text-amber-100/80 mt-2 text-base leading-relaxed font-serif italic">
             Real-time GPS tracking across Indian Railways (IRCTC), State Road Transport Corporations (KSRTC, MSRTC, DTC, BMTC), and rapid Metro lines.
           </p>
         </div>
 
         {/* Quick Corridor Presets */}
-        <div className="relative z-10 mt-5 pt-4 border-t border-ivory-300/80 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-stone-600">Quick Corridors:</span>
+        <div className="relative z-10 mt-6 pt-4 border-t border-white/15 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-[#FFA649]">Quick Corridors:</span>
           {quickSearchPresets.map((preset, idx) => (
             <button
               key={idx}
@@ -167,7 +170,7 @@ export default function PassengerSearch() {
                   setRoutes(Array.isArray(res.data) ? res.data : []);
                 });
               }}
-              className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white/80 hover:bg-white border border-ivory-300 text-stone-800 transition"
+              className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-[#1f2c37] hover:bg-[#18222b] border border-slate-600 hover:border-[#FFA649] text-slate-200 hover:text-[#FFA649] transition shadow-2xs"
             >
               {preset.label}
             </button>
@@ -176,12 +179,12 @@ export default function PassengerSearch() {
       </div>
 
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-sienna-50 border border-sienna-200 text-sienna-900 text-sm flex items-center justify-between gap-3">
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm flex items-center justify-between gap-3">
           <span>{errorMessage}</span>
           <button
             type="button"
             onClick={fetchRoutes}
-            className="font-semibold underline underline-offset-2"
+            className="font-semibold underline underline-offset-2 hover:text-[#283845]"
           >
             Retry
           </button>
@@ -189,17 +192,17 @@ export default function PassengerSearch() {
       )}
 
       {/* Route Search Form (REQ-10, REQ-11, REQ-12) */}
-      <div className="bg-white rounded-xl border border-ivory-300 shadow-sm p-5 space-y-4">
+      <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-5 space-y-4">
         {/* Search Mode Tabs & Pan-India Mode Selectors */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ivory-200 pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 pb-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 bg-ivory-100 p-1 rounded-lg text-xs font-medium">
+            <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-lg text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setSearchMode('all')}
                 className={`px-3 py-1.5 rounded-md transition ${
                   searchMode === 'all'
-                    ? 'bg-white text-sienna-800 shadow-2xs font-semibold'
+                    ? 'bg-[#FFA649] text-[#283845] shadow-xs font-bold'
                     : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
@@ -210,7 +213,7 @@ export default function PassengerSearch() {
                 onClick={() => setSearchMode('endpoints')}
                 className={`px-3 py-1.5 rounded-md transition ${
                   searchMode === 'endpoints'
-                    ? 'bg-white text-sienna-800 shadow-2xs font-semibold'
+                    ? 'bg-[#FFA649] text-[#283845] shadow-xs font-bold'
                     : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
@@ -221,7 +224,7 @@ export default function PassengerSearch() {
                 onClick={() => setSearchMode('stop')}
                 className={`px-3 py-1.5 rounded-md transition ${
                   searchMode === 'stop'
-                    ? 'bg-white text-sienna-800 shadow-2xs font-semibold'
+                    ? 'bg-[#FFA649] text-[#283845] shadow-xs font-bold'
                     : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
@@ -230,36 +233,36 @@ export default function PassengerSearch() {
             </div>
 
             {/* Mode Filter Pills */}
-            <div className="flex items-center gap-1 bg-ivory-100 p-1 rounded-lg text-xs font-medium">
+            <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-lg text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setModeFilter('all')}
-                className={`px-2.5 py-1 rounded-md transition ${modeFilter === 'all' ? 'bg-white text-sienna-800 font-bold' : 'text-stone-600'}`}
+                className={`px-2.5 py-1 rounded-md transition ${modeFilter === 'all' ? 'bg-[#283845] text-[#FFA649] font-bold shadow-xs' : 'text-stone-600'}`}
               >
                 All Modes
               </button>
               <button
                 type="button"
                 onClick={() => setModeFilter('train')}
-                className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${modeFilter === 'train' ? 'bg-white text-blue-800 font-bold' : 'text-stone-600'}`}
+                className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${modeFilter === 'train' ? 'bg-[#283845] text-[#FFA649] font-bold shadow-xs' : 'text-stone-600'}`}
               >
-                <Train className="w-3 h-3 text-blue-700" />
+                <Train className="w-3 h-3 text-[#FFA649]" />
                 Trains
               </button>
               <button
                 type="button"
                 onClick={() => setModeFilter('bus')}
-                className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${modeFilter === 'bus' ? 'bg-white text-amber-800 font-bold' : 'text-stone-600'}`}
+                className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${modeFilter === 'bus' ? 'bg-[#283845] text-[#FFA649] font-bold shadow-xs' : 'text-stone-600'}`}
               >
-                <Bus className="w-3 h-3 text-amber-700" />
+                <Bus className="w-3 h-3 text-[#FFA649]" />
                 Buses
               </button>
               <button
                 type="button"
                 onClick={() => setModeFilter('metro')}
-                className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${modeFilter === 'metro' ? 'bg-white text-emerald-800 font-bold' : 'text-stone-600'}`}
+                className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${modeFilter === 'metro' ? 'bg-[#283845] text-[#FFA649] font-bold shadow-xs' : 'text-stone-600'}`}
               >
-                <Navigation className="w-3 h-3 text-emerald-700" />
+                <Navigation className="w-3 h-3 text-[#FFA649]" />
                 Metro
               </button>
             </div>
@@ -269,7 +272,7 @@ export default function PassengerSearch() {
             <select
               value={agencyFilter}
               onChange={(e) => setAgencyFilter(e.target.value)}
-              className="text-xs py-1.5 px-3 rounded-lg border border-ivory-300 bg-[#FAF8F5] text-stone-800 font-medium focus:outline-none focus:ring-1 focus:ring-sienna-500"
+              className="text-xs py-1.5 px-3 rounded-lg border border-stone-200 bg-[#FAF8F5] text-stone-800 font-medium focus:outline-none focus:ring-1 focus:ring-[#FFA649]"
             >
               {agencyOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -283,7 +286,7 @@ export default function PassengerSearch() {
                 type="checkbox"
                 checked={activeOnly}
                 onChange={(e) => setActiveOnly(e.target.checked)}
-                className="rounded border-stone-300 text-sienna-600 focus:ring-sienna-500 w-4 h-4"
+                className="rounded border-stone-300 text-[#283845] focus:ring-[#FFA649] w-4 h-4 accent-[#283845]"
               />
               <span>Live Trips Only ({routes.filter(r => r.live_status?.is_active).length})</span>
             </label>
@@ -300,7 +303,7 @@ export default function PassengerSearch() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search train/bus number (e.g. 22436, 12952, KA-01) or service name (e.g. Vande Bharat, Shivneri, FlyBus)..."
-                className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-ivory-300 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-sienna-500/20 focus:border-sienna-500"
+                className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-stone-200 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#FFA649]/30 focus:border-[#FFA649]"
               />
             </div>
           )}
@@ -308,23 +311,23 @@ export default function PassengerSearch() {
           {searchMode === 'endpoints' && (
             <>
               <div className="md:col-span-5 relative">
-                <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-sienna-600" />
+                <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#FFA649]" />
                 <input
                   type="text"
                   value={sourceQuery}
                   onChange={(e) => setSourceQuery(e.target.value)}
                   placeholder="Origin Station/Terminal (e.g. New Delhi, Bengaluru, Mumbai CSMT)"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-ivory-300 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-sienna-500/20 focus:border-sienna-500"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-stone-200 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#FFA649]/30 focus:border-[#FFA649]"
                 />
               </div>
               <div className="md:col-span-5 relative">
-                <Navigation className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-sage-600" />
+                <Navigation className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#283845]" />
                 <input
                   type="text"
                   value={destinationQuery}
                   onChange={(e) => setDestinationQuery(e.target.value)}
                   placeholder="Destination Station/Terminal (e.g. Varanasi, Mysuru, Pune)"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-ivory-300 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-sienna-500/20 focus:border-sienna-500"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-stone-200 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#FFA649]/30 focus:border-[#FFA649]"
                 />
               </div>
             </>
@@ -332,13 +335,13 @@ export default function PassengerSearch() {
 
           {searchMode === 'stop' && (
             <div className="md:col-span-10 relative">
-              <MapPin className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-stormy-500" />
+              <MapPin className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#283845]" />
               <input
                 type="text"
                 value={stopQuery}
                 onChange={(e) => setStopQuery(e.target.value)}
                 placeholder="Enter any junction name along the corridor (e.g. Kanpur Central, Prayagraj, Mandya, Lonavala)..."
-                className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-ivory-300 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-sienna-500/20 focus:border-sienna-500"
+                className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-stone-200 bg-[#FAF8F5] text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#FFA649]/30 focus:border-[#FFA649]"
               />
             </div>
           )}
@@ -346,9 +349,9 @@ export default function PassengerSearch() {
           <div className="md:col-span-2 flex items-center gap-2">
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-sienna-500 hover:bg-sienna-600 text-white font-semibold text-sm shadow-sm transition"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-[#FFA649] hover:bg-[#f08b26] text-[#283845] font-bold text-sm shadow-sm transition"
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-4 h-4 text-[#283845]" />
               Search
             </button>
             {(searchQuery || sourceQuery || destinationQuery || stopQuery || modeFilter !== 'all' || agencyFilter !== 'all') && (
@@ -434,8 +437,8 @@ export default function PassengerSearch() {
                     key={route.id}
                     className={`bg-white rounded-xl border transition-all duration-200 overflow-hidden ${
                       isSelected
-                        ? 'border-sienna-500 shadow-md ring-1 ring-sienna-500/20'
-                        : 'border-ivory-300 hover:border-ivory-400 shadow-2xs'
+                        ? 'border-[#283845] shadow-md ring-2 ring-[#FFA649]/50'
+                        : 'border-stone-200 hover:border-[#FFA649] shadow-2xs'
                     }`}
                   >
                     <div className="p-5 space-y-4">
@@ -443,20 +446,20 @@ export default function PassengerSearch() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-sienna-100 text-sienna-800 border border-sienna-200">
+                            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-[#FFA649] text-[#283845] shadow-xs">
                               {route.route_no}
                             </span>
-                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-ivory-100 text-stone-700 border border-ivory-200">
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-[#283845] text-[#FFA649] shadow-xs">
                               {route.agency}
                             </span>
                             <span className="text-xs text-stone-500">
                               {route.distance_km} km • {route.stops?.length || 0} Stops
                             </span>
                           </div>
-                          <h3 className="font-serif text-lg font-bold text-stone-900 mt-1 flex items-center gap-2">
-                            {mode === 'train' && <Train className="w-4 h-4 text-blue-800 shrink-0" />}
-                            {mode === 'metro' && <Navigation className="w-4 h-4 text-emerald-800 shrink-0" />}
-                            {mode === 'bus' && <Bus className="w-4 h-4 text-amber-800 shrink-0" />}
+                          <h3 className="font-serif text-lg font-bold text-[#283845] mt-1 flex items-center gap-2">
+                            {mode === 'train' && <Train className="w-4 h-4 text-[#FFA649] shrink-0" />}
+                            {mode === 'metro' && <Navigation className="w-4 h-4 text-[#FFA649] shrink-0" />}
+                            {mode === 'bus' && <Bus className="w-4 h-4 text-[#FFA649] shrink-0" />}
                             <span>{route.route_name}</span>
                           </h3>
                         </div>
@@ -465,12 +468,12 @@ export default function PassengerSearch() {
                         <div>
                           {isActive ? (
                             <div className="flex flex-col items-end">
-                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
                                 isDelayed
-                                  ? 'bg-sienna-100 text-sienna-800 border border-sienna-200'
-                                  : 'bg-sage-100 text-sage-800 border border-sage-200'
+                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                  : 'bg-[#FFA649]/20 text-[#283845] border border-[#FFA649]'
                               }`}>
-                                <span className={`w-2 h-2 rounded-full animate-ping ${isDelayed ? 'bg-sienna-500' : 'bg-sage-500'}`} />
+                                <span className={`w-2 h-2 rounded-full animate-ping ${isDelayed ? 'bg-rose-500' : 'bg-[#FFA649]'}`} />
                                 {isDelayed ? `Delayed (+${route.live_status.delay_minutes}m)` : 'Live & On Schedule'}
                               </span>
                               <span className="text-[10px] text-stone-500 font-mono mt-0.5">
@@ -478,8 +481,8 @@ export default function PassengerSearch() {
                               </span>
                             </div>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-stormy-100 text-stormy-700">
-                              <span className="w-1.5 h-1.5 rounded-full bg-stormy-400" />
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-stone-100 text-stone-600">
+                              <span className="w-1.5 h-1.5 rounded-full bg-stone-400" />
                               Scheduled Service
                             </span>
                           )}
@@ -487,22 +490,22 @@ export default function PassengerSearch() {
                       </div>
 
                       {/* Route Path & Key Metrics */}
-                      <div className="bg-[#FAF8F5] rounded-lg p-3 border border-ivory-200 text-xs space-y-2">
-                        <div className="flex items-center justify-between text-stone-700 font-medium">
+                      <div className="bg-[#FAF8F5] rounded-lg p-3 border border-stone-200 text-xs space-y-2">
+                        <div className="flex items-center justify-between text-[#283845] font-medium">
                           <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-sienna-500" />
+                            <span className="w-2 h-2 rounded-full bg-[#FFA649]" />
                             <span className="font-semibold">{route.source}</span>
                           </div>
                           <ArrowRight className="w-3.5 h-3.5 text-stone-400" />
                           <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-sage-600" />
+                            <span className="w-2 h-2 rounded-full bg-[#283845]" />
                             <span className="font-semibold">{route.destination}</span>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-1 border-t border-ivory-200 text-[11px] text-stone-600">
+                        <div className="flex items-center justify-between pt-1 border-t border-stone-200 text-[11px] text-stone-600">
                           <span>Typical Duration: <strong>{route.typical_duration || 'N/A'}</strong></span>
-                          <span>Standard Fare: <strong className="text-sienna-800">₹{route.fare_inr || 50}</strong></span>
+                          <span>Standard Fare: <strong className="text-[#283845] font-bold">₹{route.fare_inr || 50}</strong></span>
                           {route.live_status?.platform && (
                             <span>Platform: <strong>{route.live_status.platform}</strong></span>
                           )}
@@ -511,18 +514,18 @@ export default function PassengerSearch() {
 
                       {/* Active Telemetry Details */}
                       {isActive && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-1 border-t border-ivory-200">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-1 border-t border-stone-200">
                           <div>
                             <span className="text-stone-500">Speed:</span>{' '}
-                            <strong className="text-stone-800">{route.live_status.current_location?.speed || 34} km/h</strong>
+                            <strong className="text-[#283845]">{route.live_status.current_location?.speed || 34} km/h</strong>
                           </div>
                           <div>
                             <span className="text-stone-500">Occupancy:</span>{' '}
-                            <strong className="text-stone-800">{route.live_status.occupancy_percent || 75}%</strong>
+                            <strong className="text-[#283845]">{route.live_status.occupancy_percent || 75}%</strong>
                           </div>
                           <div className="text-right sm:text-left col-span-2 sm:col-span-1">
                             <span className="text-stone-500">Next Stop:</span>{' '}
-                            <strong className="text-stone-800 truncate">{route.live_status.next_stop || 'En Route'}</strong>
+                            <strong className="text-[#283845] truncate">{route.live_status.next_stop || 'En Route'}</strong>
                           </div>
                         </div>
                       )}
@@ -532,13 +535,13 @@ export default function PassengerSearch() {
                         <button
                           type="button"
                           onClick={() => handleOpenLiveTracking(route)}
-                          className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition ${
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition shadow-2xs ${
                             isSelected
-                              ? 'bg-sienna-600 text-white'
-                              : 'bg-ivory-100 hover:bg-ivory-200 text-sienna-900 border border-ivory-300'
+                              ? 'bg-[#283845] text-[#FFA649]'
+                              : 'bg-stone-100 hover:bg-[#FFA649]/20 text-[#283845] hover:border-[#FFA649] border border-stone-200'
                           }`}
                         >
-                          <MapPin className="w-3.5 h-3.5" />
+                          <MapPin className="w-3.5 h-3.5 text-[#FFA649]" />
                           {isSelected ? 'Viewing Live Tracking' : 'Track on Map & View ETAs'}
                           <ChevronRight className="w-3.5 h-3.5" />
                         </button>

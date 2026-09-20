@@ -135,35 +135,35 @@ export default function PanIndiaTracker({ onSelectRoute }) {
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-ivory-300 shadow-sm overflow-hidden space-y-0">
-      {/* Top Header & Navigation Tabs */}
-      <div className="bg-[#FAF8F5] border-b border-ivory-300 p-5">
+    <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden space-y-0">
+      {/* Top Header & Navigation Tabs with Tokyo Palette */}
+      <div className="bg-[#283845] text-white border-b border-[#304352] p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sienna-100 text-sienna-800 text-xs font-semibold mb-2 border border-sienna-200">
-              <Compass className="w-3.5 h-3.5 text-sienna-600" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFA649] text-[#283845] text-xs font-bold mb-2 shadow-xs">
+              <Compass className="w-3.5 h-3.5 text-[#283845]" />
               <span>National Transport Tracking Services</span>
             </div>
-            <h2 className="font-serif text-2xl font-bold text-stone-900 tracking-tight">
+            <h2 className="font-serif text-2xl md:text-3xl font-bold text-white tracking-tight">
               Pan-India Live Transit Hub
             </h2>
-            <p className="text-stone-600 text-xs mt-1">
+            <p className="text-amber-100/80 text-xs mt-1 font-serif italic">
               Direct verification for Indian Railways (IRCTC), State Road Transport Corporations (KSRTC, MSRTC, DTC, BMTC), and Metro junctions.
             </p>
           </div>
 
           {/* Module Selector Pills */}
-          <div className="flex items-center gap-1 bg-ivory-200/80 p-1.5 rounded-xl text-xs font-medium self-start md:self-auto overflow-x-auto max-w-full">
+          <div className="flex items-center gap-1 bg-[#1f2c37] p-1.5 rounded-xl text-xs font-medium self-start md:self-auto overflow-x-auto max-w-full border border-slate-700">
             <button
               type="button"
               onClick={() => setActiveTab('pnr')}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg transition whitespace-nowrap ${
                 activeTab === 'pnr'
-                  ? 'bg-white text-sienna-900 shadow-2xs font-semibold'
-                  : 'text-stone-600 hover:text-stone-900'
+                  ? 'bg-[#FFA649] text-[#283845] font-bold shadow-xs'
+                  : 'text-slate-300 hover:text-[#FFA649] hover:bg-white/10'
               }`}
             >
-              <Ticket className="w-3.5 h-3.5 text-sienna-600" />
+              <Ticket className={`w-3.5 h-3.5 ${activeTab === 'pnr' ? 'text-[#283845]' : 'text-[#FFA649]'}`} />
               PNR / Ticket Live Status
             </button>
 
@@ -172,11 +172,11 @@ export default function PanIndiaTracker({ onSelectRoute }) {
               onClick={() => setActiveTab('station')}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg transition whitespace-nowrap ${
                 activeTab === 'station'
-                  ? 'bg-white text-sienna-900 shadow-2xs font-semibold'
-                  : 'text-stone-600 hover:text-stone-900'
+                  ? 'bg-[#FFA649] text-[#283845] font-bold shadow-xs'
+                  : 'text-slate-300 hover:text-[#FFA649] hover:bg-white/10'
               }`}
             >
-              <Building2 className="w-3.5 h-3.5 text-sienna-600" />
+              <Building2 className={`w-3.5 h-3.5 ${activeTab === 'station' ? 'text-[#283845]' : 'text-[#FFA649]'}`} />
               Station Departure Boards
             </button>
 
@@ -185,11 +185,11 @@ export default function PanIndiaTracker({ onSelectRoute }) {
               onClick={() => setActiveTab('weather')}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg transition whitespace-nowrap ${
                 activeTab === 'weather'
-                  ? 'bg-white text-sienna-900 shadow-2xs font-semibold'
-                  : 'text-stone-600 hover:text-stone-900'
+                  ? 'bg-[#FFA649] text-[#283845] font-bold shadow-xs'
+                  : 'text-slate-300 hover:text-[#FFA649] hover:bg-white/10'
               }`}
             >
-              <Wind className="w-3.5 h-3.5 text-sienna-600" />
+              <Wind className={`w-3.5 h-3.5 ${activeTab === 'weather' ? 'text-[#283845]' : 'text-[#FFA649]'}`} />
               Corridor Weather & AQI
             </button>
 
@@ -198,11 +198,11 @@ export default function PanIndiaTracker({ onSelectRoute }) {
               onClick={() => setActiveTab('agencies')}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg transition whitespace-nowrap ${
                 activeTab === 'agencies'
-                  ? 'bg-white text-sienna-900 shadow-2xs font-semibold'
-                  : 'text-stone-600 hover:text-stone-900'
+                  ? 'bg-[#FFA649] text-[#283845] font-bold shadow-xs'
+                  : 'text-slate-300 hover:text-[#FFA649] hover:bg-white/10'
               }`}
             >
-              <PhoneCall className="w-3.5 h-3.5 text-sienna-600" />
+              <PhoneCall className={`w-3.5 h-3.5 ${activeTab === 'agencies' ? 'text-[#283845]' : 'text-[#FFA649]'}`} />
               Agencies & Helplines
             </button>
           </div>
@@ -219,24 +219,24 @@ export default function PanIndiaTracker({ onSelectRoute }) {
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Ticket className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+                <Ticket className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#283845]" />
                 <input
                   type="text"
                   value={pnrInput}
                   onChange={(e) => setPnrInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handlePnrLookup()}
-                  placeholder="e.g. 2849102847 or KA8829104"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-ivory-300 bg-[#FAF8F5] text-stone-900 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-sienna-500/20 focus:border-sienna-500 uppercase"
+                  placeholder="e.g. 2849102847 or KA8829104..."
+                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-stone-300 bg-[#FAF8F5] text-stone-900 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-[#FFA649]/30 focus:border-[#FFA649] uppercase"
                 />
               </div>
               <button
                 type="button"
                 onClick={() => handlePnrLookup()}
                 disabled={pnrLoading}
-                className="px-6 py-3 rounded-xl bg-sienna-500 hover:bg-sienna-600 text-white font-semibold text-sm shadow-sm transition flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-2.5 rounded-lg bg-[#FFA649] hover:bg-[#f08b26] text-[#283845] font-bold text-sm shadow-xs transition flex items-center gap-2 disabled:opacity-50"
               >
-                {pnrLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                Track Live
+                {pnrLoading ? <RefreshCw className="w-4 h-4 animate-spin text-[#283845]" /> : <Search className="w-4 h-4 text-[#283845]" />}
+                <span>Check Live</span>
               </button>
             </div>
 

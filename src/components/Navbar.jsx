@@ -17,24 +17,24 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#FAF8F5]/95 backdrop-blur border-b border-[#E4D6C5]">
+    <header className="sticky top-0 z-50 bg-[#283845] text-white border-b border-[#304352] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & System Brand */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-sienna-500 text-ivory-50 flex items-center justify-center shadow-md shadow-sienna-900/15 transition-transform group-hover:scale-105">
+            <div className="w-10 h-10 rounded-xl bg-[#FFA649] text-[#283845] flex items-center justify-center shadow-md shadow-black/20 transition-transform group-hover:scale-105 font-bold">
               <Train className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-serif font-bold text-xl tracking-tight text-[#231E1C]">
+                <span className="font-serif font-bold text-xl tracking-tight text-white group-hover:text-[#FFA649] transition-colors">
                   Bharat Transit
                 </span>
-                <span className="text-[10px] uppercase font-mono tracking-wider font-semibold px-2 py-0.5 rounded-full bg-sienna-100 text-sienna-800 border border-sienna-200">
+                <span className="text-[10px] uppercase font-mono tracking-wider font-bold px-2 py-0.5 rounded-full bg-[#FFA649] text-[#283845] shadow-xs">
                   Pan-India Live
                 </span>
               </div>
-              <p className="text-[11px] text-stormy-600 hidden sm:block">
+              <p className="text-[11px] text-amber-100/70 hidden sm:block font-serif italic">
                 Indian Railways • State Roadways • Metro Transit
               </p>
             </div>
@@ -46,11 +46,11 @@ export default function Navbar() {
               to="/search"
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 isActive('/search') || isActive('/')
-                  ? 'bg-ivory-200/80 text-sienna-900 font-semibold'
-                  : 'text-stormy-700 hover:text-[#231E1C] hover:bg-ivory-100'
+                  ? 'bg-[#FFA649] text-[#283845] font-semibold shadow-xs'
+                  : 'text-slate-200 hover:text-[#FFA649] hover:bg-white/10'
               }`}
             >
-              <Compass className="w-4 h-4 text-sienna-500" />
+              <Compass className={`w-4 h-4 ${isActive('/search') || isActive('/') ? 'text-[#283845]' : 'text-[#FFA649]'}`} />
               Route Search & ETAs
             </Link>
 
@@ -58,11 +58,11 @@ export default function Navbar() {
               to="/map"
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 isActive('/map')
-                  ? 'bg-ivory-200/80 text-sienna-900 font-semibold'
-                  : 'text-stormy-700 hover:text-[#231E1C] hover:bg-ivory-100'
+                  ? 'bg-[#FFA649] text-[#283845] font-semibold shadow-xs'
+                  : 'text-slate-200 hover:text-[#FFA649] hover:bg-white/10'
               }`}
             >
-              <MapPin className="w-4 h-4 text-sage-600" />
+              <MapPin className={`w-4 h-4 ${isActive('/map') ? 'text-[#283845]' : 'text-[#FFA649]'}`} />
               Pan-India Fleet Map
             </Link>
 
@@ -70,11 +70,11 @@ export default function Navbar() {
               to="/pnr"
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 isActive('/pnr')
-                  ? 'bg-ivory-200/80 text-sienna-900 font-semibold'
-                  : 'text-stormy-700 hover:text-[#231E1C] hover:bg-ivory-100'
+                  ? 'bg-[#FFA649] text-[#283845] font-semibold shadow-xs'
+                  : 'text-slate-200 hover:text-[#FFA649] hover:bg-white/10'
               }`}
             >
-              <Ticket className="w-4 h-4 text-sienna-600" />
+              <Ticket className={`w-4 h-4 ${isActive('/pnr') ? 'text-[#283845]' : 'text-[#FFA649]'}`} />
               PNR & Station Boards
             </Link>
 
@@ -84,11 +84,11 @@ export default function Navbar() {
                 to="/driver"
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive('/driver')
-                    ? 'bg-ivory-200/80 text-sienna-900 font-semibold'
-                    : 'text-stormy-700 hover:text-[#231E1C] hover:bg-ivory-100'
+                    ? 'bg-[#FFA649] text-[#283845] font-semibold shadow-xs'
+                    : 'text-slate-200 hover:text-[#FFA649] hover:bg-white/10'
                 }`}
               >
-                <Gauge className="w-4 h-4 text-stormy-600" />
+                <Gauge className={`w-4 h-4 ${isActive('/driver') ? 'text-[#283845]' : 'text-[#FFA649]'}`} />
                 Crew Portal
               </Link>
             )}
@@ -99,11 +99,11 @@ export default function Navbar() {
                 to="/admin"
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive('/admin')
-                    ? 'bg-ivory-200/80 text-sienna-900 font-semibold'
-                    : 'text-stormy-700 hover:text-[#231E1C] hover:bg-ivory-100'
+                    ? 'bg-[#FFA649] text-[#283845] font-semibold shadow-xs'
+                    : 'text-slate-200 hover:text-[#FFA649] hover:bg-white/10'
                 }`}
               >
-                <ShieldCheck className="w-4 h-4 text-sienna-600" />
+                <ShieldCheck className={`w-4 h-4 ${isActive('/admin') ? 'text-[#283845]' : 'text-[#FFA649]'}`} />
                 Admin Console
               </Link>
             )}
@@ -116,57 +116,57 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg border border-ivory-300 bg-white hover:bg-ivory-50 text-stone-700 transition shadow-2xs"
+                className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg border border-slate-600 bg-[#1f2c37] hover:bg-[#18222b] text-white transition shadow-2xs"
                 title="Switch demo persona to test SRS roles"
               >
-                <span className="w-2 h-2 rounded-full bg-sage-500 animate-pulse"></span>
-                <span className="font-medium hidden sm:inline text-stone-500">Role:</span>
-                <span className="font-semibold text-stone-900">
+                <span className="w-2 h-2 rounded-full bg-[#FFA649] animate-pulse"></span>
+                <span className="font-medium hidden sm:inline text-slate-300">Role:</span>
+                <span className="font-semibold text-white">
                   {user ? user.role : 'Guest'}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-stormy-500" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#FFA649]" />
               </button>
 
               {roleMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-[#FAF8F5] rounded-xl border border-ivory-300 shadow-lg py-1.5 z-50 text-sm">
-                  <div className="px-3 py-1.5 border-b border-ivory-200 text-[11px] font-bold uppercase tracking-wider text-stormy-600">
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl border border-[#c1d2df] shadow-xl py-1.5 z-50 text-sm text-stone-800">
+                  <div className="px-3 py-1.5 border-b border-stone-200 text-[11px] font-bold uppercase tracking-wider text-[#283845]">
                     Switch Persona (SRS Roles)
                   </div>
 
                   <button
                     type="button"
                     onClick={() => handleRoleSwitch('Passenger')}
-                    className="w-full text-left px-3 py-2 hover:bg-ivory-100 flex items-center justify-between text-stone-800"
+                    className="w-full text-left px-3 py-2 hover:bg-amber-50 flex items-center justify-between text-stone-800"
                   >
                     <div>
                       <div className="font-medium">Commuter (Passenger)</div>
                       <div className="text-xs text-stone-500">Aarav Mehta</div>
                     </div>
-                    {user?.role === 'Passenger' && <Check className="w-4 h-4 text-sage-600" />}
+                    {user?.role === 'Passenger' && <Check className="w-4 h-4 text-[#FFA649]" />}
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleRoleSwitch('Driver')}
-                    className="w-full text-left px-3 py-2 hover:bg-ivory-100 flex items-center justify-between text-stone-800"
+                    className="w-full text-left px-3 py-2 hover:bg-amber-50 flex items-center justify-between text-stone-800"
                   >
                     <div>
                       <div className="font-medium">Driver / Conductor</div>
                       <div className="text-xs text-stone-500">Vikram Singh</div>
                     </div>
-                    {user?.role === 'Driver' && <Check className="w-4 h-4 text-sage-600" />}
+                    {user?.role === 'Driver' && <Check className="w-4 h-4 text-[#FFA649]" />}
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleRoleSwitch('Admin')}
-                    className="w-full text-left px-3 py-2 hover:bg-ivory-100 flex items-center justify-between text-stone-800"
+                    className="w-full text-left px-3 py-2 hover:bg-amber-50 flex items-center justify-between text-stone-800"
                   >
                     <div>
                       <div className="font-medium">Administrator</div>
                       <div className="text-xs text-stone-500">Chief Admin</div>
                     </div>
-                    {user?.role === 'Admin' && <Check className="w-4 h-4 text-sage-600" />}
+                    {user?.role === 'Admin' && <Check className="w-4 h-4 text-[#FFA649]" />}
                   </button>
                 </div>
               )}
@@ -176,10 +176,10 @@ export default function Navbar() {
             {user ? (
               <div className="flex items-center gap-2">
                 <div className="hidden lg:flex flex-col text-right">
-                  <span className="text-xs font-semibold text-stone-900 leading-tight">
+                  <span className="text-xs font-semibold text-white leading-tight">
                     {user.name || user.email}
                   </span>
-                  <span className="text-[10px] text-stone-500">
+                  <span className="text-[10px] text-amber-200/80">
                     {user.email}
                   </span>
                 </div>
@@ -187,7 +187,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={logout}
-                  className="p-2 text-stormy-600 hover:text-sienna-600 hover:bg-ivory-100 rounded-lg transition"
+                  className="p-2 text-slate-300 hover:text-[#FFA649] hover:bg-white/10 rounded-lg transition"
                   title="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />
@@ -197,13 +197,13 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="px-3 py-1.5 text-xs font-medium text-stone-700 hover:text-stone-900 rounded-lg"
+                  className="px-3 py-1.5 text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 rounded-lg transition"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="px-3 py-1.5 text-xs font-semibold text-white bg-sienna-500 hover:bg-sienna-600 rounded-lg shadow-sm"
+                  className="px-3 py-1.5 text-xs font-semibold text-[#283845] bg-[#FFA649] hover:bg-[#f08b26] rounded-lg shadow-sm transition"
                 >
                   Register
                 </Link>
@@ -214,23 +214,23 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Sub-Navigation Bar */}
-      <div className="md:hidden flex items-center justify-around py-2 border-t border-ivory-200 bg-ivory-50/50 text-xs font-medium text-stone-700">
-        <Link to="/search" className={`px-2 py-1 rounded ${isActive('/search') ? 'text-sienna-700 font-bold' : ''}`}>
+      <div className="md:hidden flex items-center justify-around py-2 border-t border-[#304352] bg-[#1f2c37] text-xs font-medium text-slate-300">
+        <Link to="/search" className={`px-2 py-1 rounded ${isActive('/search') ? 'text-[#FFA649] font-bold' : ''}`}>
           Search
         </Link>
-        <Link to="/map" className={`px-2 py-1 rounded ${isActive('/map') ? 'text-sienna-700 font-bold' : ''}`}>
+        <Link to="/map" className={`px-2 py-1 rounded ${isActive('/map') ? 'text-[#FFA649] font-bold' : ''}`}>
           Fleet Map
         </Link>
-        <Link to="/pnr" className={`px-2 py-1 rounded ${isActive('/pnr') ? 'text-sienna-700 font-bold' : ''}`}>
+        <Link to="/pnr" className={`px-2 py-1 rounded ${isActive('/pnr') ? 'text-[#FFA649] font-bold' : ''}`}>
           PNR & Boards
         </Link>
         {user && (user.role === 'Driver' || user.role === 'Admin') && (
-          <Link to="/driver" className={`px-2 py-1 rounded ${isActive('/driver') ? 'text-sienna-700 font-bold' : ''}`}>
+          <Link to="/driver" className={`px-2 py-1 rounded ${isActive('/driver') ? 'text-[#FFA649] font-bold' : ''}`}>
             Crew
           </Link>
         )}
         {user && user.role === 'Admin' && (
-          <Link to="/admin" className={`px-2 py-1 rounded ${isActive('/admin') ? 'text-sienna-700 font-bold' : ''}`}>
+          <Link to="/admin" className={`px-2 py-1 rounded ${isActive('/admin') ? 'text-[#FFA649] font-bold' : ''}`}>
             Admin
           </Link>
         )}
