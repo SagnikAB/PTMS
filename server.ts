@@ -20,12 +20,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Normalizes request URLs for both serverless (Vercel) and standalone environments
+// Normalizes request URLs for serverless rewrite environments if needed
 app.use((req, res, next) => {
-  if (req.originalUrl && req.originalUrl.startsWith('/api') && !req.url.startsWith('/api')) {
-    req.url = req.originalUrl;
-  } else if (!req.url.startsWith('/api') && req.url !== '/' && !req.url.startsWith('/assets')) {
-    req.url = '/api' + req.url;
+  if (req.query && typeof req.query.path === 'string') {
+    const p = req.query.path.startsWith('/') ? req.query.path : `/${req.query.path}`;
+    req.url = p.startsWith('/api') ? p : `/api${p}`;
   }
   next();
 });
@@ -234,16 +233,19 @@ function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: num
 }
 
 function computeETA(trip: Trip, stop: Stop, routeStops: Stop[]): { etaMinutes: number; etaTime: string; isDelayed: boolean } {
+  const currentLoc = trip.current_location || { lat: 28.6139, lng: 77.2090, speed: 45, timestamp: new Date().toISOString() };
+  const targetLoc = stop?.location || { lat: 28.6139, lng: 77.2090 };
+
   // Distance from vehicle's current coordinates to the target stop
   const dist = calculateDistanceKm(
-    trip.current_location.lat,
-    trip.current_location.lng,
-    stop.location.lat,
-    stop.location.lng
+    currentLoc.lat,
+    currentLoc.lng,
+    targetLoc.lat,
+    targetLoc.lng
   );
 
   // Speed in km/h with minimum speed threshold for realistic transit
-  const speed = Math.max(trip.current_location.speed || 40, 25);
+  const speed = Math.max(currentLoc.speed || 40, 25);
   const baseMinutes = Math.round((dist / speed) * 60);
   const totalMinutes = Math.max(1, baseMinutes + (trip.delay_minutes || 0));
 
@@ -310,43 +312,51 @@ function requireRole(...allowedRoles: string[]) {
 
 // Live background ticker for authentic Pan-India multi-modal transit tracking
 setInterval(() => {
-  for (const trip of trips) {
-    if (trip.status === 'Active') {
-      const route = routes.find(r => r.id === trip.route_id);
-      if (!route) continue;
+  try {
+    for (const trip of trips) {
+      if (trip.status === 'Active') {
+        const route = routes.find(r => r.id === trip.route_id);
+        if (!route || !route.stop_ids) continue;
 
-      const routeStops = route.stop_ids.map(id => stops.find(s => s.id === id)).filter(Boolean) as Stop[];
-      if (routeStops.length < 2) continue;
+        const routeStops = route.stop_ids.map(id => stops.find(s => s.id === id)).filter(Boolean) as Stop[];
+        if (routeStops.length < 2) continue;
 
-      // Realistic speed profile by transit archetype
-      const isTrain = route.mode === 'train';
-      const isMetro = route.mode === 'metro';
-      const stepIncrement = isTrain ? 0.7 : isMetro ? 1.5 : 1.1;
+        // Realistic speed profile by transit archetype
+        const isTrain = route.mode === 'train';
+        const isMetro = route.mode === 'metro';
+        const stepIncrement = isTrain ? 0.7 : isMetro ? 1.5 : 1.1;
 
-      // Progress forward along corridor
-      trip.path_progress_percent = (trip.path_progress_percent + stepIncrement) % 100;
-      const progressFraction = trip.path_progress_percent / 100;
+        // Progress forward along corridor
+        trip.path_progress_percent = (((trip.path_progress_percent || 0) + stepIncrement) % 100);
+        const progressFraction = Math.max(0, Math.min(0.999, trip.path_progress_percent / 100));
 
-      // Interpolate along route stops
-      const segmentCount = routeStops.length - 1;
-      const segIndex = Math.min(Math.floor(progressFraction * segmentCount), segmentCount - 1);
-      const segFraction = (progressFraction * segmentCount) - segIndex;
+        // Interpolate along route stops
+        const segmentCount = Math.max(1, routeStops.length - 1);
+        const segIndex = Math.max(0, Math.min(Math.floor(progressFraction * segmentCount), segmentCount - 1));
+        const segFraction = (progressFraction * segmentCount) - segIndex;
 
-      const p1 = routeStops[segIndex].location;
-      const p2 = routeStops[segIndex + 1].location;
+        const p1 = routeStops[segIndex]?.location;
+        const p2 = routeStops[segIndex + 1]?.location || p1;
+        if (!p1 || !p2) continue;
 
-      const baseSpeed = isTrain ? 118 : isMetro ? 56 : 76;
-      const speedOscillation = Math.round(Math.sin(Date.now() / 3500 + trip.id.charCodeAt(5)) * 8);
+        const baseSpeed = isTrain ? 118 : isMetro ? 56 : 76;
+        const charCode = trip.id && trip.id.length > 5 ? trip.id.charCodeAt(5) : 65;
+        const speedOscillation = Math.round(Math.sin(Date.now() / 3500 + charCode) * 8);
 
-      trip.current_location = {
-        lat: parseFloat((p1.lat + (p2.lat - p1.lat) * segFraction).toFixed(5)),
-        lng: parseFloat((p1.lng + (p2.lng - p1.lng) * segFraction).toFixed(5)),
-        speed: Math.max(25, baseSpeed + speedOscillation),
-        timestamp: new Date().toISOString()
-      };
+        trip.current_location = {
+          lat: parseFloat((p1.lat + (p2.lat - p1.lat) * segFraction).toFixed(5)),
+          lng: parseFloat((p1.lng + (p2.lng - p1.lng) * segFraction).toFixed(5)),
+          speed: Math.max(25, baseSpeed + (isNaN(speedOscillation) ? 0 : speedOscillation)),
+          timestamp: new Date().toISOString()
+        };
 
-      trip.next_stop_id = routeStops[segIndex + 1].id;
+        if (routeStops[segIndex + 1]) {
+          trip.next_stop_id = routeStops[segIndex + 1].id;
+        }
+      }
     }
+  } catch (err) {
+    console.error('Safe recovery in simulation ticker:', err);
   }
 }, 3500);
 
@@ -674,44 +684,49 @@ app.get('/api/routes/:id/live', (req, res) => {
 
 // All Active Trips overview
 app.get('/api/trips/active', (req, res) => {
-  const activeTripsData = trips.filter(t => t.status === 'Active').map(trip => {
-    const route = routes.find(r => r.id === trip.route_id);
-    const vehicle = vehicles.find(v => v.id === trip.vehicle_id);
-    const driver = users.find(u => u.id === trip.driver_id);
-    const nextStop = trip.next_stop_id ? stops.find(s => s.id === trip.next_stop_id) : null;
+  try {
+    const activeTripsData = trips.filter(t => t.status === 'Active').map(trip => {
+      const route = routes.find(r => r.id === trip.route_id);
+      const vehicle = vehicles.find(v => v.id === trip.vehicle_id);
+      const driver = users.find(u => u.id === trip.driver_id);
+      const nextStop = trip.next_stop_id ? stops.find(s => s.id === trip.next_stop_id) : null;
 
-    return {
-      trip_id: trip.id,
-      route: route ? {
-        id: route.id,
-        route_no: route.route_no,
-        route_name: route.route_name,
-        agency: route.agency,
-        mode: route.mode,
-        zone: route.zone,
-        fare_inr: route.fare_inr
-      } : null,
-      vehicle: vehicle ? {
-        id: vehicle.id,
-        reg_no: vehicle.reg_no,
-        model: vehicle.model,
-        agency: vehicle.agency,
-        mode: vehicle.mode,
-        vehicle_class: vehicle.vehicle_class
-      } : null,
-      driver: driver ? { id: driver.id, name: driver.name, phone: driver.phone } : null,
-      start_time: trip.start_time,
-      current_location: trip.current_location,
-      delay_minutes: trip.delay_minutes,
-      delay_reason: trip.delay_reason || 'Operating to schedule',
-      occupancy_percent: trip.occupancy_percent || 85,
-      platform: trip.platform || 'Platform 1',
-      path_progress_percent: trip.path_progress_percent || 0,
-      next_stop: nextStop ? { id: nextStop.id, name: nextStop.name, city: nextStop.city, code: nextStop.code } : null
-    };
-  });
+      return {
+        trip_id: trip.id,
+        route: route ? {
+          id: route.id,
+          route_no: route.route_no,
+          route_name: route.route_name,
+          agency: route.agency,
+          mode: route.mode,
+          zone: route.zone,
+          fare_inr: route.fare_inr
+        } : null,
+        vehicle: vehicle ? {
+          id: vehicle.id,
+          reg_no: vehicle.reg_no,
+          model: vehicle.model,
+          agency: vehicle.agency,
+          mode: vehicle.mode,
+          vehicle_class: vehicle.vehicle_class
+        } : null,
+        driver: driver ? { id: driver.id, name: driver.name, phone: driver.phone } : null,
+        start_time: trip.start_time,
+        current_location: trip.current_location || { lat: 28.6139, lng: 77.2090, speed: 40, timestamp: new Date().toISOString() },
+        delay_minutes: trip.delay_minutes || 0,
+        delay_reason: trip.delay_reason || 'Operating to schedule',
+        occupancy_percent: trip.occupancy_percent || 85,
+        platform: trip.platform || 'Platform 1',
+        path_progress_percent: trip.path_progress_percent || 0,
+        next_stop: nextStop ? { id: nextStop.id, name: nextStop.name, city: nextStop.city, code: nextStop.code } : null
+      };
+    });
 
-  res.json(activeTripsData);
+    res.json(activeTripsData);
+  } catch (err) {
+    console.error('Error in /api/trips/active:', err);
+    res.status(500).json({ error: 'Failed to fetch active trips', detail: String(err) });
+  }
 });
 
 // --- PAN-INDIA LIVE PNR & TICKET LOOKUP API ---
@@ -801,50 +816,59 @@ app.get('/api/pnr/lookup', (req, res) => {
 
 // --- LIVE STATION DEPARTURE & ARRIVAL BOARD API ---
 app.get('/api/station-board', (req, res) => {
-  const stationCode = String(req.query.station || 'NDLS').trim().toUpperCase();
-  const matchedStop = stops.find(s => s.code.toUpperCase() === stationCode || s.name.toUpperCase().includes(stationCode)) || stops[0];
+  try {
+    const stationCode = String(req.query.station || 'NDLS').trim().toUpperCase();
+    const matchedStop = stops.find(s => (s.code && s.code.toUpperCase() === stationCode) || (s.name && s.name.toUpperCase().includes(stationCode))) || stops[0];
 
-  // Find all routes that pass through this junction
-  const connectedRoutes = routes.filter(r => r.stop_ids.includes(matchedStop.id));
-  const activeOnConnected = trips.filter(t => connectedRoutes.some(r => r.id === t.route_id));
+    if (!matchedStop) {
+      return res.json({ station: null, boards: [] });
+    }
 
-  const departures = connectedRoutes.map((r, i) => {
-    const active = activeOnConnected.find(t => t.route_id === r.id);
-    const scheduledHour = (7 + i * 2) % 24;
-    const schedStr = `${String(scheduledHour).padStart(2, '0')}:${(i * 15) % 60 === 0 ? '00' : '30'}`;
-    const delay = active ? active.delay_minutes : (i % 3 === 0 ? 5 : 0);
-    const expDate = new Date();
-    expDate.setHours(scheduledHour, ((i * 15) % 60) + delay);
-    const expStr = expDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // Find all routes that pass through this junction
+    const connectedRoutes = routes.filter(r => r.stop_ids && r.stop_ids.includes(matchedStop.id));
+    const activeOnConnected = trips.filter(t => connectedRoutes.some(r => r.id === t.route_id));
 
-    return {
-      service_no: r.route_no,
-      service_name: r.route_name,
-      agency: r.agency,
-      mode: r.mode,
-      destination: r.destination,
-      scheduled_time: schedStr,
-      expected_time: expStr,
-      delay_minutes: delay,
-      platform: active?.platform?.replace(/.*Platform /, 'PF ') || `PF ${((i + 1) % 6) + 1}`,
-      status: delay === 0 ? 'On Time' : `Delayed by ${delay}m`,
-      live_trip_id: active ? active.id : null,
-      speed_kmh: active ? active.current_location.speed : null
-    };
-  });
+    const departures = connectedRoutes.map((r, i) => {
+      const active = activeOnConnected.find(t => t.route_id === r.id);
+      const scheduledHour = (7 + i * 2) % 24;
+      const schedStr = `${String(scheduledHour).padStart(2, '0')}:${(i * 15) % 60 === 0 ? '00' : '30'}`;
+      const delay = active ? (active.delay_minutes || 0) : (i % 3 === 0 ? 5 : 0);
+      const expDate = new Date();
+      expDate.setHours(scheduledHour, ((i * 15) % 60) + delay);
+      const expStr = expDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  res.json({
-    station: {
-      id: matchedStop.id,
-      code: matchedStop.code,
-      name: matchedStop.name,
-      city: matchedStop.city,
-      state: matchedStop.state,
-      type: matchedStop.type,
-      location: matchedStop.location
-    },
-    boards: departures
-  });
+      return {
+        service_no: r.route_no,
+        service_name: r.route_name,
+        agency: r.agency,
+        mode: r.mode,
+        destination: r.destination,
+        scheduled_time: schedStr,
+        expected_time: expStr,
+        delay_minutes: delay,
+        platform: active?.platform?.replace(/.*Platform /, 'PF ') || `PF ${((i + 1) % 6) + 1}`,
+        status: delay === 0 ? 'On Time' : `Delayed by ${delay}m`,
+        live_trip_id: active ? active.id : null,
+        speed_kmh: active?.current_location?.speed || null
+      };
+    });
+
+    res.json({
+      station: {
+        id: matchedStop.id,
+        code: matchedStop.code,
+        name: matchedStop.name,
+        city: matchedStop.city,
+        state: matchedStop.state,
+        type: matchedStop.type,
+        location: matchedStop.location
+      },
+      boards: departures
+    });
+  } catch (err) {
+    console.error('Error in /api/station-board:', err);
+    res.status(500).json({ error: 'Failed to fetch station board', detail: String(err) });
+  }
 });
 
 // --- REAL OPENSTREETMAP GEOCODING PROXY FOR INDIA ---
@@ -897,71 +921,81 @@ app.get('/api/external/india-search', async (req, res) => {
 
 // --- REGIONAL WEATHER & CORRIDOR ADVISORY API ---
 app.get('/api/transit/weather', (req, res) => {
-  const city = String(req.query.city || 'delhi').toLowerCase();
+  try {
+    const city = String(req.query.city || 'delhi').toLowerCase();
 
-  const weatherMap: Record<string, any> = {
-    delhi: { temp_c: 24, condition: 'Hazy Sunshine', aqi: 182, aqi_status: 'Moderate', visibility_km: 7.5, advisory: 'Normal rail and bus corridor clearance. No major fog disruption.' },
-    mumbai: { temp_c: 29, condition: 'Warm & Humid', aqi: 85, aqi_status: 'Satisfactory', visibility_km: 9.0, advisory: 'Coastal breezes. Western ghat corridors operating smoothly.' },
-    bengaluru: { temp_c: 22, condition: 'Pleasant & Breezy', aqi: 48, aqi_status: 'Good', visibility_km: 10.0, advisory: 'Favorable travel conditions across Mysuru expressway and airport line.' },
-    kolkata: { temp_c: 27, condition: 'Partly Cloudy', aqi: 110, aqi_status: 'Moderate', visibility_km: 8.0, advisory: 'Normal operations across Howrah junction and Green line underwater metro.' },
-    chennai: { temp_c: 30, condition: 'Sunny & Coastal Humid', aqi: 62, aqi_status: 'Satisfactory', visibility_km: 9.5, advisory: 'Clear signals along Southern Railway mainline corridors.' },
-    pune: { temp_c: 25, condition: 'Clear Sky', aqi: 74, aqi_status: 'Satisfactory', visibility_km: 9.0, advisory: 'Expressway traffic flowing normally. Toll FASTag operational.' },
-    lucknow: { temp_c: 23, condition: 'Mild Haze', aqi: 165, aqi_status: 'Moderate', visibility_km: 6.5, advisory: 'Agra-Lucknow Expressway speed adherence recommended.' }
-  };
+    const weatherMap: Record<string, any> = {
+      delhi: { temp_c: 24, condition: 'Hazy Sunshine', aqi: 182, aqi_status: 'Moderate', visibility_km: 7.5, advisory: 'Normal rail and bus corridor clearance. No major fog disruption.' },
+      mumbai: { temp_c: 29, condition: 'Warm & Humid', aqi: 85, aqi_status: 'Satisfactory', visibility_km: 9.0, advisory: 'Coastal breezes. Western ghat corridors operating smoothly.' },
+      bengaluru: { temp_c: 22, condition: 'Pleasant & Breezy', aqi: 48, aqi_status: 'Good', visibility_km: 10.0, advisory: 'Favorable travel conditions across Mysuru expressway and airport line.' },
+      kolkata: { temp_c: 27, condition: 'Partly Cloudy', aqi: 110, aqi_status: 'Moderate', visibility_km: 8.0, advisory: 'Normal operations across Howrah junction and Green line underwater metro.' },
+      chennai: { temp_c: 30, condition: 'Sunny & Coastal Humid', aqi: 62, aqi_status: 'Satisfactory', visibility_km: 9.5, advisory: 'Clear signals along Southern Railway mainline corridors.' },
+      pune: { temp_c: 25, condition: 'Clear Sky', aqi: 74, aqi_status: 'Satisfactory', visibility_km: 9.0, advisory: 'Expressway traffic flowing normally. Toll FASTag operational.' },
+      lucknow: { temp_c: 23, condition: 'Mild Haze', aqi: 165, aqi_status: 'Moderate', visibility_km: 6.5, advisory: 'Agra-Lucknow Expressway speed adherence recommended.' }
+    };
 
-  const matched = Object.keys(weatherMap).find(k => city.includes(k)) || 'delhi';
-  res.json({
-    city: city.charAt(0).toUpperCase() + city.slice(1),
-    ...weatherMap[matched]
-  });
+    const matched = Object.keys(weatherMap).find(k => city.includes(k)) || 'delhi';
+    res.json({
+      city: city.charAt(0).toUpperCase() + city.slice(1),
+      ...weatherMap[matched]
+    });
+  } catch (err) {
+    console.error('Error in /api/transit/weather:', err);
+    res.status(500).json({ error: 'Failed to fetch transit weather', detail: String(err) });
+  }
 });
 
 // --- OPERATING AGENCIES & HELPLINES API ---
 app.get('/api/transit/agencies', (req, res) => {
-  res.json([
-    {
-      name: 'Indian Railways (IRCTC)',
-      category: 'National Rail & High-Speed',
-      helpline: '139 (RailMadad)',
-      coverage: 'Pan-India',
-      active_services: 'Rajdhani, Vande Bharat, Shatabdi Express'
-    },
-    {
-      name: 'KSRTC (Karnataka)',
-      category: 'State Road Transport',
-      helpline: '080-49596666',
-      coverage: 'Karnataka, Goa, Kerala, Tamil Nadu',
-      active_services: 'Airavat Club Class, FlyBus, Ambari Utsav'
-    },
-    {
-      name: 'MSRTC (Maharashtra)',
-      category: 'State Road Transport',
-      helpline: '1800-22-1250',
-      coverage: 'Maharashtra, Gujarat, Karnataka',
-      active_services: 'Shivneri AC Volvo, Ashwamedh, Shivshahi'
-    },
-    {
-      name: 'DTC & DIMTS (Delhi NCR)',
-      category: 'Metropolitan Bus Transit',
-      helpline: '1414 / 011-23370236',
-      coverage: 'National Capital Territory of Delhi',
-      active_services: 'Electric AC Buses, Airport Express 534'
-    },
-    {
-      name: 'BMTC (Bengaluru)',
-      category: 'Metropolitan Transit',
-      helpline: '1800-425-1663',
-      coverage: 'Bengaluru Urban & Airport Corridor',
-      active_services: 'Vayu Vajra AC Volvo, Vajra City Express'
-    },
-    {
-      name: 'KMRC (Kolkata Metro)',
-      category: 'Rapid Metro Transit',
-      helpline: '033-2288-4444',
-      coverage: 'Kolkata Metropolitan Area',
-      active_services: 'Green Line (Underwater Ganga Metro), Blue Line'
-    }
-  ]);
+  try {
+    res.json([
+      {
+        name: 'Indian Railways (IRCTC)',
+        category: 'National Rail & High-Speed',
+        helpline: '139 (RailMadad)',
+        coverage: 'Pan-India',
+        active_services: 'Rajdhani, Vande Bharat, Shatabdi Express'
+      },
+      {
+        name: 'KSRTC (Karnataka)',
+        category: 'State Road Transport',
+        helpline: '080-49596666',
+        coverage: 'Karnataka, Goa, Kerala, Tamil Nadu',
+        active_services: 'Airavat Club Class, FlyBus, Ambari Utsav'
+      },
+      {
+        name: 'MSRTC (Maharashtra)',
+        category: 'State Road Transport',
+        helpline: '1800-22-1250',
+        coverage: 'Maharashtra, Gujarat, Karnataka',
+        active_services: 'Shivneri AC Volvo, Ashwamedh, Shivshahi'
+      },
+      {
+        name: 'DTC & DIMTS (Delhi NCR)',
+        category: 'Metropolitan Bus Transit',
+        helpline: '1414 / 011-23370236',
+        coverage: 'National Capital Territory of Delhi',
+        active_services: 'Electric AC Buses, Airport Express 534'
+      },
+      {
+        name: 'BMTC (Bengaluru)',
+        category: 'Metropolitan Transit',
+        helpline: '1800-425-1663',
+        coverage: 'Bengaluru Urban & Airport Corridor',
+        active_services: 'Vayu Vajra AC Volvo, Vajra City Express'
+      },
+      {
+        name: 'KMRC (Kolkata Metro)',
+        category: 'Rapid Metro Transit',
+        helpline: '033-2288-4444',
+        coverage: 'Kolkata Metropolitan Area',
+        active_services: 'Green Line (Underwater Ganga Metro), Blue Line'
+      }
+    ]);
+  } catch (err) {
+    console.error('Error in /api/transit/agencies:', err);
+    res.status(500).json({ error: 'Failed to fetch agencies', detail: String(err) });
+  }
 });
 
 // --- DRIVER TRIP MANAGEMENT APIs (SRS 4.5, REQ-25 to REQ-30, BR-01, BR-02, SAFE-04) ---
@@ -1479,6 +1513,9 @@ async function startServer() {
 // Global error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Unhandled API error:', err);
+  if (res.headersSent) {
+    return next(err);
+  }
   res.status(err.status || 500).json({
     error: 'Internal Server Error',
     message: err?.message || 'An unexpected error occurred'
