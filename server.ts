@@ -613,73 +613,78 @@ app.get('/api/search/routes', (req, res) => {
 
 // Detailed live route tracking with ETAs for every stop (REQ-16 to REQ-24)
 app.get('/api/routes/:id/live', (req, res) => {
-  const route = routes.find(r => r.id === req.params.id);
-  if (!route) {
-    return res.status(404).json({ detail: 'Route not found' });
-  }
-
-  const routeStops = route.stop_ids
-    .map(sid => stops.find(s => s.id === sid))
-    .filter(Boolean) as Stop[];
-
-  const activeTrip = trips.find(t => t.route_id === route.id && t.status === 'Active');
-  const vehicle = activeTrip ? vehicles.find(v => v.id === activeTrip.vehicle_id) : null;
-  const driver = activeTrip ? users.find(u => u.id === activeTrip.driver_id) : null;
-
-  // Calculate ETA for each stop (REQ-21, REQ-22, REQ-23, REQ-24)
-  const stopsWithETA = routeStops.map((stop, idx) => {
-    let etaInfo = null;
-    if (activeTrip) {
-      etaInfo = computeETA(activeTrip, stop, routeStops);
+  try {
+    const route = routes.find(r => r.id === req.params.id);
+    if (!route) {
+      return res.status(404).json({ detail: 'Route not found' });
     }
-    return {
-      ...stop,
-      sequence: idx + 1,
-      eta: etaInfo ? etaInfo.etaTime : 'ETA unavailable',
-      eta_minutes: etaInfo ? etaInfo.etaMinutes : null,
-      is_delayed: etaInfo ? etaInfo.isDelayed : false
-    };
-  });
 
-  // Check last known location if inactive (REQ-19)
-  const lastTrip = tripHistory
-    .filter(h => h.route_no === route.route_no)
-    .sort((a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime())[0];
+    const routeStops = (route.stop_ids || [])
+      .map(sid => stops.find(s => s.id === sid))
+      .filter(Boolean) as Stop[];
 
-  res.json({
-    route: {
-      id: route.id,
-      route_no: route.route_no,
-      route_name: route.route_name,
-      agency: route.agency,
-      mode: route.mode,
-      zone: route.zone,
-      fare_inr: route.fare_inr,
-      typical_duration: route.typical_duration,
-      frequency_mins: route.frequency_mins,
-      source: route.source,
-      destination: route.destination,
-      distance_km: route.distance_km,
-      stops: stopsWithETA
-    },
-    active_trip: activeTrip ? {
-      id: activeTrip.id,
-      start_time: activeTrip.start_time,
-      current_location: activeTrip.current_location,
-      delay_minutes: activeTrip.delay_minutes,
-      delay_reason: activeTrip.delay_reason || 'Normal schedule run',
-      occupancy_percent: activeTrip.occupancy_percent || 85,
-      platform: activeTrip.platform || 'Platform 1',
-      path_progress_percent: activeTrip.path_progress_percent || 0,
-      next_stop: activeTrip.next_stop_id ? stops.find(s => s.id === activeTrip.next_stop_id) : null,
-      vehicle: vehicle ? { id: vehicle.id, reg_no: vehicle.reg_no, model: vehicle.model, capacity: vehicle.capacity, vehicle_class: vehicle.vehicle_class, agency: vehicle.agency, mode: vehicle.mode } : null,
-      driver: driver ? { id: driver.id, name: driver.name, phone: driver.phone, licenseNo: driver.licenseNo } : null
-    } : null,
-    last_known_trip: lastTrip ? {
-      ended_at: lastTrip.end_time,
-      vehicle_reg: lastTrip.vehicle_reg
-    } : null
-  });
+    const activeTrip = trips.find(t => t.route_id === route.id && t.status === 'Active');
+    const vehicle = activeTrip ? vehicles.find(v => v.id === activeTrip.vehicle_id) : null;
+    const driver = activeTrip ? users.find(u => u.id === activeTrip.driver_id) : null;
+
+    // Calculate ETA for each stop (REQ-21, REQ-22, REQ-23, REQ-24)
+    const stopsWithETA = routeStops.map((stop, idx) => {
+      let etaInfo = null;
+      if (activeTrip) {
+        etaInfo = computeETA(activeTrip, stop, routeStops);
+      }
+      return {
+        ...stop,
+        sequence: idx + 1,
+        eta: etaInfo ? etaInfo.etaTime : 'ETA unavailable',
+        eta_minutes: etaInfo ? etaInfo.etaMinutes : null,
+        is_delayed: etaInfo ? etaInfo.isDelayed : false
+      };
+    });
+
+    // Check last known location if inactive (REQ-19)
+    const lastTrip = tripHistory
+      .filter(h => h.route_no === route.route_no)
+      .sort((a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime())[0];
+
+    res.json({
+      route: {
+        id: route.id,
+        route_no: route.route_no,
+        route_name: route.route_name,
+        agency: route.agency,
+        mode: route.mode,
+        zone: route.zone,
+        fare_inr: route.fare_inr,
+        typical_duration: route.typical_duration,
+        frequency_mins: route.frequency_mins,
+        source: route.source,
+        destination: route.destination,
+        distance_km: route.distance_km,
+        stops: stopsWithETA
+      },
+      active_trip: activeTrip ? {
+        id: activeTrip.id,
+        start_time: activeTrip.start_time,
+        current_location: activeTrip.current_location || { lat: 28.6139, lng: 77.2090, speed: 45, timestamp: new Date().toISOString() },
+        delay_minutes: activeTrip.delay_minutes || 0,
+        delay_reason: activeTrip.delay_reason || 'Normal schedule run',
+        occupancy_percent: activeTrip.occupancy_percent || 85,
+        platform: activeTrip.platform || 'Platform 1',
+        path_progress_percent: activeTrip.path_progress_percent || 0,
+        next_stop: activeTrip.next_stop_id ? stops.find(s => s.id === activeTrip.next_stop_id) : null,
+        vehicle: vehicle ? { id: vehicle.id, reg_no: vehicle.reg_no, model: vehicle.model, capacity: vehicle.capacity, vehicle_class: vehicle.vehicle_class, agency: vehicle.agency, mode: vehicle.mode } : null,
+        driver: driver ? { id: driver.id, name: driver.name, phone: driver.phone, licenseNo: driver.licenseNo } : null
+      } : null,
+      last_known_trip: lastTrip ? {
+        ended_at: lastTrip.end_time,
+        vehicle_reg: lastTrip.vehicle_reg
+      } : null
+    });
+  } catch (err) {
+    console.error('Error in /api/routes/:id/live:', err);
+    res.status(500).json({ error: 'Failed to fetch live route details', detail: String(err) });
+  }
 });
 
 // All Active Trips overview
@@ -731,87 +736,92 @@ app.get('/api/trips/active', (req, res) => {
 
 // --- PAN-INDIA LIVE PNR & TICKET LOOKUP API ---
 app.get('/api/pnr/lookup', (req, res) => {
-  const pnrQuery = String(req.query.pnr || '').trim();
-  if (!pnrQuery) {
-    return res.status(400).json({ detail: 'PNR or Ticket number is required' });
-  }
+  try {
+    const pnrQuery = String(req.query.pnr || '').trim();
+    if (!pnrQuery) {
+      return res.status(400).json({ detail: 'PNR or Ticket number is required' });
+    }
 
-  // 1. Search exact match in seeded PNRs
-  const found = pnrs.find(p => p.pnr.toLowerCase() === pnrQuery.toLowerCase());
-  if (found) {
-    const trip = trips.find(t => t.id === found.trip_id);
-    const vehicle = trip ? vehicles.find(v => v.id === trip.vehicle_id) : null;
-    const route = trip ? routes.find(r => r.id === trip.route_id) : null;
-    const nextStop = trip && trip.next_stop_id ? stops.find(s => s.id === trip.next_stop_id) : null;
+    // 1. Search exact match in seeded PNRs
+    const found = pnrs.find(p => p.pnr.toLowerCase() === pnrQuery.toLowerCase());
+    if (found) {
+      const trip = trips.find(t => t.id === found.trip_id);
+      const vehicle = trip ? vehicles.find(v => v.id === trip.vehicle_id) : null;
+      const route = trip ? routes.find(r => r.id === trip.route_id) : null;
+      const nextStop = trip && trip.next_stop_id ? stops.find(s => s.id === trip.next_stop_id) : null;
+
+      return res.json({
+        found: true,
+        pnr: found.pnr,
+        passenger_name: found.passenger_name,
+        route_no: found.route_no,
+        route_name: found.route_name,
+        agency: found.agency,
+        mode: found.mode,
+        source: found.source,
+        destination: found.destination,
+        boarding_point: found.boarding_point,
+        date_of_journey: found.date_of_journey,
+        booking_status: found.booking_status,
+        coach_berth: found.coach_berth,
+        live_status: trip ? {
+          trip_id: trip.id,
+          current_location: trip.current_location || { lat: 28.6139, lng: 77.2090, speed: 45, timestamp: new Date().toISOString() },
+          speed: trip.current_location?.speed || 45,
+          delay_minutes: trip.delay_minutes || 0,
+          delay_reason: trip.delay_reason || 'Normal running on corridor',
+          platform: trip.platform || 'Platform 1',
+          next_stop: nextStop ? { name: nextStop.name, city: nextStop.city, code: nextStop.code } : null,
+          occupancy: trip.occupancy_percent || 85,
+          vehicle: vehicle ? { reg_no: vehicle.reg_no, model: vehicle.model, class: vehicle.vehicle_class } : null
+        } : null
+      });
+    }
+
+    // 2. Real-time dynamic simulation for any 10-digit Indian Railway PNR or State Transport ticket code
+    const isTrain = /^\d{10}$/.test(pnrQuery);
+    const activeTrainTrip = trips.find(t => t.id === 'trip_vb_22436') || trips[0];
+    const activeBusTrip = trips.find(t => t.id === 'trip_ksrtc_01') || trips[1];
+    const assignedTrip = isTrain ? activeTrainTrip : activeBusTrip;
+    const assignedRoute = (assignedTrip ? routes.find(r => r.id === assignedTrip.route_id) : null) || routes[0];
+    const assignedVehicle = (assignedTrip ? vehicles.find(v => v.id === assignedTrip.vehicle_id) : null) || vehicles[0];
+    const nextStop = assignedTrip?.next_stop_id ? stops.find(s => s.id === assignedTrip.next_stop_id) : null;
 
     return res.json({
       found: true,
-      pnr: found.pnr,
-      passenger_name: found.passenger_name,
-      route_no: found.route_no,
-      route_name: found.route_name,
-      agency: found.agency,
-      mode: found.mode,
-      source: found.source,
-      destination: found.destination,
-      boarding_point: found.boarding_point,
-      date_of_journey: found.date_of_journey,
-      booking_status: found.booking_status,
-      coach_berth: found.coach_berth,
-      live_status: trip ? {
-        trip_id: trip.id,
-        current_location: trip.current_location,
-        speed: trip.current_location.speed,
-        delay_minutes: trip.delay_minutes,
-        delay_reason: trip.delay_reason || 'Normal running on corridor',
-        platform: trip.platform || 'Platform 1',
+      simulated: true,
+      pnr: pnrQuery,
+      passenger_name: 'Verified Commuter Pass',
+      route_no: assignedRoute.route_no,
+      route_name: assignedRoute.route_name,
+      agency: assignedRoute.agency,
+      mode: assignedRoute.mode,
+      source: assignedRoute.source,
+      destination: assignedRoute.destination,
+      boarding_point: assignedRoute.source,
+      date_of_journey: new Date().toISOString().split('T')[0],
+      booking_status: 'CNF (Confirmed)',
+      coach_berth: isTrain ? 'B3 - Berth 28 (Middle)' : 'Seat 14 (Window)',
+      live_status: assignedTrip ? {
+        trip_id: assignedTrip.id,
+        current_location: assignedTrip.current_location || { lat: 28.6139, lng: 77.2090, speed: 45, timestamp: new Date().toISOString() },
+        speed: assignedTrip.current_location?.speed || 45,
+        delay_minutes: assignedTrip.delay_minutes || 0,
+        delay_reason: assignedTrip.delay_reason || 'Clear corridor signal clearance',
+        platform: assignedTrip.platform || 'Platform 1',
         next_stop: nextStop ? { name: nextStop.name, city: nextStop.city, code: nextStop.code } : null,
-        occupancy: trip.occupancy_percent || 85,
-        vehicle: vehicle ? { reg_no: vehicle.reg_no, model: vehicle.model, class: vehicle.vehicle_class } : null
+        occupancy: assignedTrip.occupancy_percent || 88,
+        vehicle: {
+          reg_no: assignedVehicle.reg_no,
+          model: assignedVehicle.model,
+          class: assignedVehicle.vehicle_class
+        }
       } : null
     });
+  } catch (err) {
+    console.error('Error in /api/pnr/lookup:', err);
+    res.status(500).json({ error: 'Failed to lookup PNR', detail: String(err) });
   }
-
-  // 2. Real-time dynamic simulation for any 10-digit Indian Railway PNR or State Transport ticket code
-  const isTrain = /^\d{10}$/.test(pnrQuery);
-  const activeTrainTrip = trips.find(t => t.id === 'trip_vb_22436') || trips[0];
-  const activeBusTrip = trips.find(t => t.id === 'trip_ksrtc_01') || trips[1];
-  const assignedTrip = isTrain ? activeTrainTrip : activeBusTrip;
-  const assignedRoute = routes.find(r => r.id === assignedTrip.route_id) || routes[0];
-  const assignedVehicle = vehicles.find(v => v.id === assignedTrip.vehicle_id) || vehicles[0];
-  const nextStop = assignedTrip.next_stop_id ? stops.find(s => s.id === assignedTrip.next_stop_id) : null;
-
-  return res.json({
-    found: true,
-    simulated: true,
-    pnr: pnrQuery,
-    passenger_name: 'Verified Commuter Pass',
-    route_no: assignedRoute.route_no,
-    route_name: assignedRoute.route_name,
-    agency: assignedRoute.agency,
-    mode: assignedRoute.mode,
-    source: assignedRoute.source,
-    destination: assignedRoute.destination,
-    boarding_point: assignedRoute.source,
-    date_of_journey: new Date().toISOString().split('T')[0],
-    booking_status: 'CNF (Confirmed)',
-    coach_berth: isTrain ? 'B3 - Berth 28 (Middle)' : 'Seat 14 (Window)',
-    live_status: {
-      trip_id: assignedTrip.id,
-      current_location: assignedTrip.current_location,
-      speed: assignedTrip.current_location.speed,
-      delay_minutes: assignedTrip.delay_minutes,
-      delay_reason: assignedTrip.delay_reason || 'Clear corridor signal clearance',
-      platform: assignedTrip.platform || 'Platform 1',
-      next_stop: nextStop ? { name: nextStop.name, city: nextStop.city, code: nextStop.code } : null,
-      occupancy: assignedTrip.occupancy_percent || 88,
-      vehicle: {
-        reg_no: assignedVehicle.reg_no,
-        model: assignedVehicle.model,
-        class: assignedVehicle.vehicle_class
-      }
-    }
-  });
 });
 
 // --- LIVE STATION DEPARTURE & ARRIVAL BOARD API ---
